@@ -38,7 +38,7 @@ Water %
 
 Bone Density
 
-![FitDays BLE Web App](https://github.com/ahmedammad1709/FitDays-BLE-BIA-Analyzer/captures/UI.PNG?raw=true)
+![FitDays BLE Analyzer UI](https://github.com/ahmedammad1709/FitDays-BLE-BIA-Analyzer/blob/main/captures/UI.PNG?raw=true)
 
 
 🧱 Tech Stack
