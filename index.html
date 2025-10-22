@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FitDays Web – BLE BIA Analyzer</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo-circle">FD</div>
+      <div>
+        <h1>FitDays Web</h1>
+        <p class="subtitle">Real‑time Smart Scale Body Composition</p>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="btnConnect" class="btn primary">Connect Scale</button>
+      <button id="btnDisconnect" class="btn" disabled>Disconnect</button>
+      <label class="switch">
+        <input type="checkbox" id="toggleSim">
+        <span class="slider"></span>
+      </label>
+      <span class="sim-label">Simulate data</span>
+    </div>
+    <div class="connection-controls">
+      <button id="btnRetry" class="btn">Retry</button>
+      <button id="btnFallback" class="btn">Show All Devices (Fallback)</button>
+    </div>
+    <p id="statusHint" style="font-size: 0.9em; color: #777; margin-top: 8px;">
+      Tip: Turn on the scale and step on it before connecting.
+    </p>
+  </header>
+
+  <section class="status-bar">
+    <div class="status-item"><span class="label">Status:</span> <p id="connStatus"></p></div>
+    <div class="status-item"><span class="label">Device:</span> <p id="deviceName"></p></div>
+    <div class="status-item"><span class="label">Service:</span> <p id="serviceUuid"></p></div>
+    <div class="status-item"><span class="label">RSSI:</span> <span id="rssi">—</span></div>
+  </section>
+
+  <main class="container">
+    <aside class="sidebar">
+      <h2>User Profile</h2>
+      <form id="userForm" class="form-grid">
+        <label>Age
+          <input id="age" type="number" min="5" max="100" value="30">
+        </label>
+        <label>Height (cm)
+          <input id="heightCm" type="number" min="80" max="230" value="175">
+        </label>
+        <label>Sex
+          <select id="sex">
+            <option value="1">Male</option>
+            <option value="0">Female</option>
+          </select>
+        </label>
+        <label>Body Type
+          <select id="bodyType">
+            <option value="0">Standard</option>
+            <option value="1">Athlete</option>
+          </select>
+        </label>
+        <label>Units
+          <select id="units">
+            <option value="metric">Metric (kg, cm)</option>
+            <option value="imperial">Imperial (lb, in)</option>
+          </select>
+        </label>
+      </form>
+      <div class="hint">If BLE is unavailable, enable "Simulate data" to test UI and algorithms.</div>
+    </aside>
+
+    <section class="metrics">
+      <div class="metric-card emphasis">
+        <div class="metric-title">Weight</div>
+        <div class="metric-value"><span id="weightValue">—</span> <span class="unit" id="weightUnit">kg</span></div>
+      </div>
+      
+      <div class="metric-card body-diagram">
+        <div class="metric-title">Body Composition</div>
+        <div class="body-visual">
+          <svg viewBox="0 0 200 300" class="body-svg">
+            <!-- Head -->
+            <circle cx="100" cy="30" r="20" fill="var(--accent)" opacity="0.3"/>
+            <!-- Torso -->
+            <rect x="70" y="50" width="60" height="120" rx="10" fill="var(--accent)" opacity="0.3"/>
+            <!-- Arms -->
+            <rect x="40" y="60" width="20" height="80" rx="10" fill="var(--accent)" opacity="0.3"/>
+            <rect x="140" y="60" width="20" height="80" rx="10" fill="var(--accent)" opacity="0.3"/>
+            <!-- Legs -->
+            <rect x="75" y="170" width="20" height="100" rx="10" fill="var(--accent)" opacity="0.3"/>
+            <rect x="105" y="170" width="20" height="100" rx="10" fill="var(--accent)" opacity="0.3"/>
+            <!-- Body fat percentage display -->
+            <text x="100" y="160" text-anchor="middle" class="body-fat-text" id="bodyFatVisual">—%</text>
+            <text x="100" y="180" text-anchor="middle" class="body-fat-label">Body Fat</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-title">BMI</div>
+        <div class="metric-value"><span id="bmiValue">—</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Body Fat %</div>
+        <div class="metric-value"><span id="bodyFatValue">—</span> <span class="unit">%</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Muscle Mass</div>
+        <div class="metric-value"><span id="muscleMassValue">—</span> <span class="unit">kg</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Bone Mass</div>
+        <div class="metric-value"><span id="boneMassValue">—</span> <span class="unit">kg</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Total Body Water</div>
+        <div class="metric-value"><span id="tbwValue">—</span> <span class="unit">%</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Visceral Fat Index</div>
+        <div class="metric-value"><span id="vfiValue">—</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">BMR</div>
+        <div class="metric-value"><span id="bmrValue">—</span> <span class="unit">kcal</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Metabolic Age</div>
+        <div class="metric-value"><span id="metaAgeValue">—</span> <span class="unit">yrs</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>FG2305ULB Web Bluetooth integration </span>
+  </footer>
+
+  <script type="module" src="./main.js"></script>
+  <noscript>This app requires JavaScript to run.</noscript>
+</body>
+
+</html>
