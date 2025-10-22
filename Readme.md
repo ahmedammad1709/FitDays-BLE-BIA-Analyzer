@@ -70,6 +70,6 @@ Use responsibly and in accordance with applicable reverse-engineering and data p
 👨‍💻 Author
 
 Ammad Ahmed
-💼 Software Developer | BLE & Web Engineer
-📧 ahmedammad2006@gmail.com
+💼 Software Developer | BLE & Web Engineer <br/>
+📧 ahmedammad2006@gmail.com <br/>
 🌐 ammadahmed.netlify.app
