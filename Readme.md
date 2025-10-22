@@ -54,12 +54,12 @@ Platform: Web-based for direct browser BLE access
 📂 Repository Structure
 FitDays-BLE-BIA-Analyzer/
 │
-├── analysis/                # Decompiled code snippets, UUIDs, BLE mapping
-├── web-app/                 # Web Bluetooth implementation
-├── captures/                # BLE traffic (.pcapng) and test data
-├── logs/                    # Connection and debug logs
-├── docs/                    # Notes on reverse-engineered algorithms
-└── README.md                # Project documentation (you’re reading it!)
+├── analysis/                # Decompiled code snippets, UUIDs, BLE mapping <br/>
+├── web-app/                 # Web Bluetooth implementation <br/>
+├── captures/                # BLE traffic (.pcapng) and test data <br/>
+├── logs/                    # Connection and debug logs <br/>
+├── docs/                    # Notes on reverse-engineered algorithms <br/>
+└── README.md                # Project documentation (you’re reading it!) <br/>
 
 ⚠️ Legal & Ethical Disclaimer
 
