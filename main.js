@@ -367,30 +367,75 @@ async function handleBiaNotify(event) {
   }
 }
 
+// Robust weight selection heuristic
+function chooseBestWeight(candidates, lastWeight) {
+  const weightCandidates = candidates.filter(c => c.type && c.type.startsWith('weight'));
+  if (weightCandidates.length === 0) return null;
+
+  // Strict realistic range first (human weight)
+  let filtered = weightCandidates.filter(c => c.value >= 20 && c.value <= 250);
+  // Fallback to wider range if nothing matches
+  if (filtered.length === 0) filtered = weightCandidates.filter(c => c.value >= 10 && c.value <= 300);
+  if (filtered.length === 0) return null;
+
+  // Prefer scale === 100, then larger raw16
+  filtered.sort((a, b) => {
+    const scalePrefA = a.scale === 100 ? 0 : 1;
+    const scalePrefB = b.scale === 100 ? 0 : 1;
+    if (scalePrefA !== scalePrefB) return scalePrefA - scalePrefB;
+    if (b.raw16 !== a.raw16) return b.raw16 - a.raw16; // larger raw16 first
+    return 0;
+  });
+
+  // If lastWeight is available, choose closest to lastWeight among the top-tier
+  if (typeof lastWeight === 'number' && lastWeight > 0) {
+    // Only consider the best few after preference sort
+    const top = filtered.slice(0, Math.min(3, filtered.length));
+    let best = top[0];
+    let bestDiff = Math.abs(best.value - lastWeight);
+    for (let i = 1; i < top.length; i++) {
+      const diff = Math.abs(top[i].value - lastWeight);
+      if (diff < bestDiff) {
+        best = top[i];
+        bestDiff = diff;
+      }
+    }
+    return best;
+  }
+
+  // Otherwise choose the first after preference sort
+  return filtered[0];
+}
+
 async function handleVendorNotify(event) {
   try {
     const dv = event.target.value;
     const bytes = new Uint8Array(dv.buffer);
     const candidates = parseFitdaysPacket(bytes);
 
-    let weightKg = null;
-    let impedanceOhm = null;
+    // Choose best weight using heuristic
+    const last = window.__last || { weightKg: 0, impedanceOhm: 500 };
+    let chosen = chooseBestWeight(candidates, last.weightKg || 0);
+    let weightKg = chosen ? Number(chosen.value.toFixed(2)) : null;
 
-    for (const c of candidates) {
-      if (weightKg == null && c.type.startsWith('weight')) {
-        const v = c.value;
-        if (v >= 10 && v <= 300) weightKg = Number(v.toFixed(2));
-      }
-      if (impedanceOhm == null && c.type.startsWith('impedance')) {
-        const v = c.value;
-        if (v >= 150 && v <= 3000) impedanceOhm = Math.round(v);
+    if (chosen) {
+      console.log(`🎯 Weight chosen (vendor): raw16=${chosen.raw16}, scale=/${chosen.scale}, kg=${weightKg}`);
+    } else {
+      // Fallback to existing parser
+      const w = parseWeightMeasurement(dv);
+      if (w && w.weightKg) {
+        weightKg = Number(w.weightKg.toFixed(2));
+        console.log(`🎯 Weight fallback (parseWeightMeasurement): kg=${weightKg}`);
       }
     }
 
-    // Fallback to existing parsers if heuristics didn't find anything
-    if (weightKg == null) {
-      const w = parseWeightMeasurement(dv);
-      if (w && w.weightKg) weightKg = Number(w.weightKg.toFixed(2));
+    // Derive impedance from candidates or fallback
+    let impedanceOhm = null;
+    for (const c of candidates) {
+      if (c.type && c.type.startsWith('impedance') && c.value >= 150 && c.value <= 3000) {
+        impedanceOhm = Math.round(c.value);
+        break;
+      }
     }
     if (impedanceOhm == null) {
       const b = parseBiaMeasurement(dv);
@@ -402,7 +447,19 @@ async function handleVendorNotify(event) {
       return;
     }
 
-    const last = window.__last || { weightKg: 0, impedanceOhm: 500 };
+    // Optional 3-sample median smoothing for weight
+    if (weightKg != null) {
+      window.__weightSamples = Array.isArray(window.__weightSamples) ? window.__weightSamples : [];
+      window.__weightSamples.push(weightKg);
+      if (window.__weightSamples.length > 3) window.__weightSamples.shift();
+      const buf = [...window.__weightSamples].sort((a, b) => a - b);
+      if (buf.length === 3) {
+        const smoothed = buf[1];
+        console.log(`🧮 Smoothed weight (median of last 3): ${smoothed} from [${window.__weightSamples.join(', ')}]`);
+        weightKg = smoothed;
+      }
+    }
+
     const next = {
       ...last,
       ...(weightKg != null ? { weightKg } : {}),
